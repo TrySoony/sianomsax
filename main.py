@@ -28,12 +28,10 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    print("Запрос на /")  # Для отладки
     return send_file('index.html')
 
 @app.route('/<path:path>')
 def static_files(path):
-    print(f"Запрос на /{path}")  # Для отладки
     return send_file(path)
 
 # --- Управление данными пользователей ---
@@ -182,7 +180,7 @@ async def refund_command(message: types.Message):
 @dp.message(F.text == "/start")
 async def start_command(message: Message):
     # Добавляем кнопку для запуска WebApp
-    webapp_url = "https://webappka-b43n.vercel.app/" # <-- обновленный URL
+    webapp_url = "https://worker-production-cbac.up.railway.app"
     inline_keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="🎰 Open Roulette", web_app=WebAppInfo(url=webapp_url))]
@@ -549,14 +547,7 @@ async def start_roulette(message: types.Message):
         parse_mode="HTML"
     )
 
-    webapp_url = "https://webappka-b43n.vercel.app/"  # обновленный URL
-
-# keyboard = ReplyKeyboardMarkup(
-#      keyboard=[
-#            [KeyboardButton(text="🎰 Open Roulette", web_app=WebAppInfo(url=webapp_url))]
-#        ],
-#    )
-#   await message.answer("Press the button and spin the roulette!", reply_markup=keyboard)
+    webapp_url = "https://worker-production-cbac.up.railway.app"
 
 @dp.message(F.web_app_data)
 async def on_webapp_data(message: types.Message):
