@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Рулетка подарков</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+  <div id="user-avatar-container">
+    <img id="user-avatar" src="" alt="User avatar" style="display:none;" />
+  </div>
+  <div id="tab-content-roulette" class="tab-content active">
+    <h1><span>🎁</span> Gift Roulette</h1>
+    
+    <!-- Ежедневный бонус -->
+    <div id="daily-bonus" class="daily-bonus-container">
+      <div class="daily-bonus-content">
+        <div class="daily-bonus-title">🎁 Ежедневный бонус</div>
+        <div class="daily-bonus-message" id="daily-bonus-message">Заходите каждый день за бонусными попытками!</div>
+        <button class="daily-bonus-button" id="daily-bonus-button">Получить бонус</button>
+        <div class="daily-bonus-timer" id="daily-bonus-timer"></div>
+        <div class="daily-bonus-stats">
+          <div class="daily-bonus-stat">
+            <span class="daily-bonus-stat-value" id="daily-bonus-total">0</span>
+            <span class="daily-bonus-stat-label">Всего получено</span>
+          </div>
+          <div class="daily-bonus-stat">
+            <span class="daily-bonus-stat-value" id="daily-bonus-streak">0</span>
+            <span class="daily-bonus-stat-label">Дней подряд</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Бонусные попытки -->
+    <div id="bonus-attempts" class="bonus-attempts" style="display: none;">
+      <div class="bonus-attempts-title">Бонусные попытки</div>
+      <div class="bonus-attempts-count" id="bonus-attempts-count">0</div>
+      <div class="bonus-attempts-info">Используйте их для дополнительных вращений</div>
+    </div>
+    
+    <div class="roulette-container">
+      <div id="roulette" class="roulette"></div>
+      <div class="pointer"></div>
+    </div>
+    <button id="spin">Spin!</button>
+    <div id="result"></div>
+
+    <div class="prize-list-container">
+      <h2>What can you win?</h2>
+      <ul id="prize-list">
+        <!-- Prize list will be generated here -->
+      </ul>
+    </div>
+  </div>
+  
+  <div id="tab-content-gifts" class="tab-content" style="display:none">
+    <h1><span>🎁</span> My Gifts</h1>
+    <ul id="my-gifts-list">
+      <!-- Gift cards will be added via JS -->
+    </ul>
+  </div>
+  
+  <div id="tab-content-stats" class="tab-content" style="display:none">
+    <h1><span>📊</span> Статистика</h1>
+    <div class="stats-container">
+      <!-- Прогресс уровня -->
+      <div class="level-progress">
+        <div class="level-info">
+          <div class="level-name" id="level-name">Новичок</div>
+          <div class="level-number" id="level-number">Уровень 1</div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="level-progress-fill" style="width: 0%"></div>
+        </div>
+        <div class="progress-text" id="level-progress-text">0 / 100 XP</div>
+      </div>
+      
+      <!-- Статистика -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="total-wins">0</div>
+          <div class="stat-label">Выигрышей</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="total-xp">0</div>
+          <div class="stat-label">Всего XP</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="achievements-count">0</div>
+          <div class="stat-label">Достижений</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="consecutive-days">0</div>
+          <div class="stat-label">Дней подряд</div>
+        </div>
+      </div>
+      
+      <!-- Список достижений -->
+      <h2>Достижения</h2>
+      <div class="achievements-list" id="achievements-list">
+        <!-- Achievements will be generated here -->
+      </div>
+    </div>
+  </div>
+  
+  <div id="tab-content-referral" class="tab-content" style="display:none">
+    <h1><span>👥</span> Рефералы</h1>
+    <div class="stats-container">
+      <!-- Ваш реферальный код -->
+      <div class="referral-container">
+        <div class="referral-header">
+          <div class="referral-title">Ваш реферальный код</div>
+          <div class="referral-subtitle">Поделитесь кодом с друзьями и получите бонусные попытки</div>
+        </div>
+        
+        <div class="referral-code-section">
+          <div class="referral-code-display" id="referral-code-display">XXXXXX</div>
+          <div class="referral-buttons">
+            <button class="referral-btn" id="copy-referral-btn">📋 Копировать</button>
+            <button class="referral-btn" id="share-referral-btn">📤 Поделиться</button>
+          </div>
+        </div>
+        
+        <!-- Статистика рефералов -->
+        <div class="referral-stats">
+          <div class="referral-stat">
+            <div class="referral-stat-value" id="referral-total">0</div>
+            <div class="referral-stat-label">Всего рефералов</div>
+          </div>
+          <div class="referral-stat">
+            <div class="referral-stat-value" id="referral-rewards">0</div>
+            <div class="referral-stat-label">Получено наград</div>
+          </div>
+        </div>
+        
+        <!-- Награды за рефералов -->
+        <div class="referral-rewards">
+          <div class="referral-rewards-title">Награды за рефералов</div>
+          <div class="referral-rewards-list" id="referral-rewards-list">
+            <!-- Rewards will be generated here -->
+          </div>
+        </div>
+        
+        <!-- Следующая награда -->
+        <div class="referral-next-reward" id="referral-next-reward" style="display: none;">
+          <div class="referral-next-reward-title">Следующая награда</div>
+          <div class="referral-next-reward-info" id="referral-next-reward-info"></div>
+        </div>
+      </div>
+      
+      <!-- Использовать реферальный код -->
+      <div class="referral-container">
+        <div class="referral-header">
+          <div class="referral-title">Использовать реферальный код</div>
+          <div class="referral-subtitle">Введите код друга и получите бонусные попытки</div>
+        </div>
+        
+        <div class="referral-input-section">
+          <div class="referral-input-container">
+            <input type="text" class="referral-input" id="referral-input" placeholder="Введите код (6 символов)" maxlength="6">
+            <button class="referral-apply-btn" id="apply-referral-btn">Применить</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="tab-content-info" class="tab-content" style="display:none">
+    <h1><span>ℹ️</span> О проекте</h1>
+    <div class="info-container">
+      
+      <!-- О проекте -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">🎁</div>
+          <h2>GiftWins — Рулетка подарков</h2>
+        </div>
+        <div class="info-section-content">
+          <p><strong>GiftWins</strong> — это инновационная платформа для розыгрыша ценных призов через Telegram. Мы объединили увлекательную механику рулетки с современными технологиями блокчейна и криптовалют.</p>
+          <p>Наша миссия — сделать получение ценных подарков доступным, прозрачным и увлекательным для каждого пользователя.</p>
+        </div>
+      </div>
+
+      <!-- Преимущества -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">⭐</div>
+          <h2>Почему GiftWins?</h2>
+        </div>
+        <div class="info-section-content">
+          <div class="features-grid">
+            <div class="feature-item">
+              <div class="feature-icon">🔒</div>
+              <div class="feature-title">Безопасность</div>
+              <div class="feature-desc">Все транзакции защищены блокчейном Telegram</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">🎯</div>
+              <div class="feature-title">Честность</div>
+              <div class="feature-desc">Прозрачные алгоритмы и публичные результаты</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">⚡</div>
+              <div class="feature-title">Мгновенность</div>
+              <div class="feature-desc">Мгновенное получение призов в Telegram</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">🎮</div>
+              <div class="feature-title">Увлекательность</div>
+              <div class="feature-desc">Система достижений и ежедневных бонусов</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">👥</div>
+              <div class="feature-title">Социальность</div>
+              <div class="feature-desc">Реферальная программа и соревнования</div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">📱</div>
+              <div class="feature-title">Доступность</div>
+              <div class="feature-desc">Работает на любом устройстве через Telegram</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Как это работает -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">🔄</div>
+          <h2>Как это работает?</h2>
+        </div>
+        <div class="info-section-content">
+          <div class="steps-list">
+            <div class="step-item">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <div class="step-title">Подключите бота</div>
+                <div class="step-desc">Добавьте @GiftWinsSender_BOT в Telegram и подключите к бизнес-аккаунту</div>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <div class="step-title">Крутите рулетку</div>
+                <div class="step-desc">Используйте ежедневные попытки и бонусы для вращения рулетки</div>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <div class="step-title">Получайте призы</div>
+                <div class="step-desc">Выигранные подарки автоматически переводятся в ваш Telegram</div>
+              </div>
+            </div>
+            <div class="step-item">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <div class="step-title">Развивайтесь</div>
+                <div class="step-desc">Повышайте уровень, собирайте достижения и приглашайте друзей</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Безопасность -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">🛡️</div>
+          <h2>Безопасность и надежность</h2>
+        </div>
+        <div class="info-section-content">
+          <div class="security-features">
+            <div class="security-item">
+              <div class="security-icon">🔐</div>
+              <div class="security-text">
+                <strong>Блокчейн Telegram</strong><br>
+                Все транзакции защищены криптографически
+              </div>
+            </div>
+            <div class="security-item">
+              <div class="security-icon">📊</div>
+              <div class="security-text">
+                <strong>Прозрачность</strong><br>
+                Все результаты публично доступны
+              </div>
+            </div>
+            <div class="security-item">
+              <div class="security-icon">⚖️</div>
+              <div class="security-text">
+                <strong>Справедливость</strong><br>
+                Алгоритмы проверены независимыми аудиторами
+              </div>
+            </div>
+            <div class="security-item">
+              <div class="security-icon">🔄</div>
+              <div class="security-text">
+                <strong>Мгновенные выплаты</strong><br>
+                Призы переводятся автоматически без задержек
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Статистика -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">📈</div>
+          <h2>Наши достижения</h2>
+        </div>
+        <div class="info-section-content">
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value">10,000+</div>
+              <div class="stat-label">Активных игроков</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">50,000+</div>
+              <div class="stat-label">Выданных призов</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">99.9%</div>
+              <div class="stat-label">Время работы</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value">4.9★</div>
+              <div class="stat-label">Рейтинг пользователей</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Подключение бота -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">🤖</div>
+          <h2>Подключение бота</h2>
+        </div>
+        <div class="info-section-content">
+          <div class="bot-connection">
+            <div class="bot-info">
+              <div class="bot-username">@GiftWinsSender_BOT</div>
+              <div class="bot-desc">Официальный бот для получения призов</div>
+            </div>
+            <div class="connection-steps">
+              <div class="connection-step">
+                <div class="step-icon">⚙️</div>
+                <div class="step-text">Откройте настройки Telegram</div>
+              </div>
+              <div class="connection-step">
+                <div class="step-icon">💼</div>
+                <div class="step-text">Перейдите в "Telegram for Business"</div>
+              </div>
+              <div class="connection-step">
+                <div class="step-icon">🤖</div>
+                <div class="step-text">Откройте раздел "Chat Bots"</div>
+              </div>
+              <div class="connection-step">
+                <div class="step-icon">➕</div>
+                <div class="step-text">Добавьте @GiftWinsSender_BOT</div>
+              </div>
+            </div>
+            <div class="connection-note">
+              <strong>Важно:</strong> Для корректной работы боту нужны все разрешения
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Поддержка -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">💬</div>
+          <h2>Поддержка</h2>
+        </div>
+        <div class="info-section-content">
+          <div class="support-channels">
+            <div class="support-item">
+              <div class="support-icon">📧</div>
+              <div class="support-info">
+                <div class="support-title">Email поддержка</div>
+                <div class="support-desc">support@giftwins.com</div>
+              </div>
+            </div>
+            <div class="support-item">
+              <div class="support-icon">💬</div>
+              <div class="support-info">
+                <div class="support-title">Telegram чат</div>
+                <div class="support-desc">@GiftWinsSupport</div>
+              </div>
+            </div>
+            <div class="support-item">
+              <div class="support-icon">📖</div>
+              <div class="support-info">
+                <div class="support-title">FAQ</div>
+                <div class="support-desc">Часто задаваемые вопросы</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Лицензия и права -->
+      <div class="info-section">
+        <div class="info-section-header">
+          <div class="info-section-icon">📄</div>
+          <h2>Правовая информация</h2>
+        </div>
+        <div class="info-section-content">
+          <div class="legal-info">
+            <p>GiftWins работает в соответствии с законодательством о цифровых активах и криптовалютах. Все операции проводятся через официальные API Telegram.</p>
+            <div class="legal-links">
+              <a href="#" class="legal-link">Пользовательское соглашение</a>
+              <a href="#" class="legal-link">Политика конфиденциальности</a>
+              <a href="#" class="legal-link">Условия использования</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
+  <div class="tabs-container">
+    <div class="bottom-tabs">
+      <button class="tab-btn active" data-tab="roulette"><span class="tab-icon">🎰</span>Roulette</button>
+      <button class="tab-btn" data-tab="gifts"><span class="tab-icon">🎁</span>My Gifts</button>
+      <button class="tab-btn" data-tab="stats"><span class="tab-icon">📊</span>Статистика</button>
+      <button class="tab-btn" data-tab="referral"><span class="tab-icon">👥</span>Рефералы</button>
+      <button class="tab-btn" data-tab="info"><span class="tab-icon">ℹ️</span>Info</button>
+    </div>
+  </div>
+
+  <!-- Win modal -->
+  <div id="win-modal-overlay" class="modal-overlay">
+    <div id="win-modal-content" class="modal-content">
+      <img id="win-modal-img" src="" alt="Won prize">
+      <h2 id="win-modal-title"></h2>
+      <p id="win-modal-price"></p>
+      <button id="win-modal-btn">Go to My Gifts</button>
+    </div>
+  </div>
+
+  <!-- Withdraw modal -->
+  <div id="withdraw-info-modal-overlay" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <span class="modal-icon">🎁</span>
+        <h1>Withdraw Gift</h1>
+      </div>
+      <img id="withdraw-info-img" src="" alt="Gift to withdraw">
+      <h2 id="withdraw-info-title"></h2>
+      <div class="info-box">
+        <p><strong>To withdraw a gift, connect the bot to your Telegram Business Account.</strong></p>
+        <p>This will allow you to automatically transfer won gifts directly to your account.</p>
+      </div>
+      <p class="info-footer">Connection instructions are in the "Info" tab.</p>
+      <button id="withdraw-info-btn" class="withdraw-btn">Withdraw</button>
+    </div>
+  </div>
+
+  <script src="prizes.js"></script>
+  <script src="achievements.js"></script>
+  <script src="daily_bonus.js"></script>
+  <script src="referral_system.js"></script>
+  <script src="audio_system.js"></script>
+  <script src="roulette.js"></script>
+  <script>
+    // Переключение вкладок
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = {
+      roulette: document.getElementById('tab-content-roulette'),
+      gifts: document.getElementById('tab-content-gifts'),
+      stats: document.getElementById('tab-content-stats'),
+      referral: document.getElementById('tab-content-referral'),
+      info: document.getElementById('tab-content-info')
+    };
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Воспроизводим звук клика
+        if (window.audioSystem) {
+          window.audioSystem.playClickSound();
+        }
+        
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        Object.values(tabContents).forEach(tc => tc.style.display = 'none');
+        tabContents[btn.dataset.tab].style.display = '';
+        
+        // Обновляем статистику при переходе на вкладку
+        if (btn.dataset.tab === 'stats') {
+          updateStatsDisplay();
+        }
+        
+        // Обновляем рефералы при переходе на вкладку
+        if (btn.dataset.tab === 'referral') {
+          updateReferralDisplay();
+        }
+      });
+    });
+
+    // Генерация списка призов под рулеткой
+    function generatePrizeList() {
+      const prizeList = document.getElementById('prize-list');
+      // Фильтруем "Пусто"
+      const displayPrizes = prizes.filter(p => p.starPrice > 0);
+      
+      prizeList.innerHTML = displayPrizes.map(prize => `
+        <li>
+          <img src="${prize.img}" alt="${prize.name}">
+          <span class="prize-list-name">${prize.name}</span>
+          <span class="prize-list-price">${prize.starPrice}⭐</span>
+        </li>
+      `).join('');
+    }
+
+    // Обновление отображения статистики
+    function updateStatsDisplay() {
+      const stats = window.achievementSystem.getStats();
+      
+      // Обновляем уровень
+      document.getElementById('level-name').textContent = stats.currentLevelInfo.name;
+      document.getElementById('level-number').textContent = `Уровень ${stats.level}`;
+      
+      // Обновляем прогресс-бар
+      const progressPercent = stats.level < 10 ? 
+        ((stats.totalXP - stats.currentLevelInfo.xpRequired) / (stats.nextLevelXP - stats.currentLevelInfo.xpRequired)) * 100 : 100;
+      document.getElementById('level-progress-fill').style.width = `${progressPercent}%`;
+      document.getElementById('level-progress-text').textContent = 
+        `${stats.totalXP} / ${stats.nextLevelXP} XP`;
+      
+      // Обновляем статистику
+      document.getElementById('total-wins').textContent = stats.totalWins;
+      document.getElementById('total-xp').textContent = stats.totalXP;
+      document.getElementById('achievements-count').textContent = `${stats.achievements}/${stats.totalAchievements}`;
+      document.getElementById('consecutive-days').textContent = stats.consecutiveDays;
+      
+      // Обновляем бонусные попытки
+      const bonusAttemptsEl = document.getElementById('bonus-attempts');
+      const bonusCountEl = document.getElementById('bonus-attempts-count');
+      if (stats.bonusAttempts > 0) {
+        bonusAttemptsEl.style.display = 'block';
+        bonusCountEl.textContent = stats.bonusAttempts;
+      } else {
+        bonusAttemptsEl.style.display = 'none';
+      }
+      
+      // Генерируем список достижений
+      generateAchievementsList();
+    }
+
+    // Генерация списка достижений
+    function generateAchievementsList() {
+      const achievementsList = document.getElementById('achievements-list');
+      const achievements = window.achievementSystem.getAchievementsList();
+      
+      achievementsList.innerHTML = achievements.map(achievement => `
+        <div class="achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'}">
+          <div class="achievement-item-icon">${achievement.icon}</div>
+          <div class="achievement-item-content">
+            <div class="achievement-item-title">${achievement.name}</div>
+            <div class="achievement-item-description">${achievement.description}</div>
+            ${achievement.reward.attempts ? `<div class="achievement-item-reward">Награда: +${achievement.reward.attempts} попыток</div>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Обновление отображения рефералов
+    function updateReferralDisplay() {
+      if (!window.referralSystem) return;
+      
+      const stats = window.referralSystem.getReferralStats();
+      
+      // Обновляем реферальный код
+      document.getElementById('referral-code-display').textContent = stats.referralCode;
+      
+      // Обновляем статистику
+      document.getElementById('referral-total').textContent = stats.totalReferrals;
+      document.getElementById('referral-rewards').textContent = stats.rewardsClaimed.length;
+      
+      // Генерируем список наград
+      generateReferralRewardsList();
+      
+      // Обновляем следующую награду
+      updateNextRewardDisplay();
+    }
+
+    // Генерация списка наград за рефералов
+    function generateReferralRewardsList() {
+      if (!window.referralSystem) return;
+      
+      const rewardsList = document.getElementById('referral-rewards-list');
+      const stats = window.referralSystem.getReferralStats();
+      const rewards = [1, 5, 10, 25, 50];
+      
+      rewardsList.innerHTML = rewards.map(count => {
+        const isClaimed = stats.rewardsClaimed.includes(count);
+        const isAvailable = stats.totalReferrals >= count && !isClaimed;
+        const rewardAmount = window.referralSystem.getRewardAmount(count);
+        
+        let statusClass = '';
+        if (isClaimed) statusClass = 'claimed';
+        else if (isAvailable) statusClass = 'available';
+        
+        return `
+          <div class="referral-reward-item ${statusClass}">
+            <div class="referral-reward-info">
+              <div class="referral-reward-icon">${isClaimed ? '✅' : isAvailable ? '🎁' : '🔒'}</div>
+              <div class="referral-reward-text">${count} рефералов</div>
+            </div>
+            <div class="referral-reward-amount">+${rewardAmount} попыток</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Обновление отображения следующей награды
+    function updateNextRewardDisplay() {
+      if (!window.referralSystem) return;
+      
+      const nextReward = window.referralSystem.getNextReward();
+      const nextRewardEl = document.getElementById('referral-next-reward');
+      const nextRewardInfoEl = document.getElementById('referral-next-reward-info');
+      
+      if (nextReward) {
+        nextRewardEl.style.display = 'block';
+        nextRewardInfoEl.textContent = `${nextReward.count} рефералов (осталось ${nextReward.remaining}) = +${nextReward.reward} попыток`;
+      } else {
+        nextRewardEl.style.display = 'none';
+      }
+    }
+
+    // Обработчики для реферальной системы
+    function setupReferralHandlers() {
+      // Копирование реферального кода
+      const copyBtn = document.getElementById('copy-referral-btn');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          if (window.referralSystem) {
+            window.referralSystem.copyReferralCode();
+          }
+          // Воспроизводим звук уведомления
+          if (window.audioSystem) {
+            window.audioSystem.playNotificationSound();
+          }
+        });
+      }
+      
+      // Поделиться реферальным кодом
+      const shareBtn = document.getElementById('share-referral-btn');
+      if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+          if (window.referralSystem) {
+            window.referralSystem.shareReferralCode();
+          }
+          // Воспроизводим звук уведомления
+          if (window.audioSystem) {
+            window.audioSystem.playNotificationSound();
+          }
+        });
+      }
+      
+      // Применение реферального кода
+      const applyBtn = document.getElementById('apply-referral-btn');
+      const referralInput = document.getElementById('referral-input');
+      
+      if (applyBtn && referralInput) {
+        applyBtn.addEventListener('click', () => {
+          const code = referralInput.value.trim().toUpperCase();
+          if (code.length !== 6) {
+            alert('Код должен содержать 6 символов');
+            return;
+          }
+          
+          if (window.referralSystem) {
+            const result = window.referralSystem.applyReferralCode(code);
+            if (result.success) {
+              referralInput.value = '';
+              updateStatsDisplay();
+              // Воспроизводим звук бонуса
+              if (window.audioSystem) {
+                window.audioSystem.playBonusSound();
+              }
+              alert(result.message);
+            } else {
+              alert(result.message);
+            }
+          }
+        });
+        
+        // Применение по Enter
+        referralInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            applyBtn.click();
+          }
+        });
+      }
+    }
+
+    // Обновление ежедневного бонуса
+    function updateDailyBonus() {
+      if (!window.dailyBonusSystem) return;
+      
+      const bonusInfo = window.dailyBonusSystem.getBonusInfo();
+      const stats = window.dailyBonusSystem.getStats();
+      
+      const messageEl = document.getElementById('daily-bonus-message');
+      const buttonEl = document.getElementById('daily-bonus-button');
+      const timerEl = document.getElementById('daily-bonus-timer');
+      const totalEl = document.getElementById('daily-bonus-total');
+      const streakEl = document.getElementById('daily-bonus-streak');
+      
+      messageEl.textContent = bonusInfo.message;
+      buttonEl.disabled = !bonusInfo.canClaim;
+      buttonEl.textContent = bonusInfo.canClaim ? 'Получить бонус' : 'Уже получен';
+      
+      if (!bonusInfo.canClaim) {
+        timerEl.textContent = `Следующий бонус через: ${bonusInfo.nextClaim}`;
+      } else {
+        timerEl.textContent = '';
+      }
+      
+      totalEl.textContent = stats.totalClaims;
+      streakEl.textContent = stats.consecutiveDays;
+    }
+
+    // Обработчик получения ежедневного бонуса
+    function handleDailyBonusClaim() {
+      if (!window.dailyBonusSystem) return;
+      
+      const result = window.dailyBonusSystem.claimBonus();
+      
+      if (result.success) {
+        // Воспроизводим звук бонуса
+        if (window.audioSystem) {
+          window.audioSystem.playBonusSound();
+        }
+        
+        // Анимация получения
+        const bonusContainer = document.getElementById('daily-bonus');
+        bonusContainer.classList.add('daily-bonus-claimed');
+        
+        // Показываем уведомление
+        const notification = document.createElement('div');
+        notification.className = 'achievement-notification';
+        notification.innerHTML = `
+          <div class="achievement-icon">🎁</div>
+          <div class="achievement-content">
+            <div class="achievement-title">Ежедневный бонус!</div>
+            <div class="achievement-description">${result.message}</div>
+          </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+          notification.classList.add('show');
+        }, 100);
+        
+        setTimeout(() => {
+          notification.classList.remove('show');
+          setTimeout(() => {
+            document.body.removeChild(notification);
+          }, 300);
+        }, 3000);
+        
+        // Обновляем отображение
+        updateDailyBonus();
+        updateStatsDisplay();
+        
+        setTimeout(() => {
+          bonusContainer.classList.remove('daily-bonus-claimed');
+        }, 600);
+      } else {
+        alert(result.message);
+      }
+    }
+
+    // Вызываем генерацию списка при загрузке
+    document.addEventListener('DOMContentLoaded', function() {
+      generatePrizeList();
+      
+      // Инициализируем систему достижений
+      window.achievementSystem.checkDailyLogin();
+      updateStatsDisplay();
+      
+      // Инициализируем ежедневные бонусы
+      updateDailyBonus();
+      
+      // Инициализируем реферальную систему
+      updateReferralDisplay();
+      setupReferralHandlers();
+      
+      // Добавляем обработчик для кнопки ежедневного бонуса
+      const dailyBonusButton = document.getElementById('daily-bonus-button');
+      if (dailyBonusButton) {
+        dailyBonusButton.addEventListener('click', handleDailyBonusClaim);
+      }
+      
+      // Запускаем фоновую музыку
+      if (window.audioSystem && !window.audioSystem.isMuted) {
+        setTimeout(() => {
+          window.audioSystem.playMusic();
+        }, 2000); // Небольшая задержка для лучшего UX
+      }
+      
+      // Обновляем таймер каждую минуту
+      setInterval(updateDailyBonus, 60000);
+    });
+
+    // Пример подарка для отображения (замени на динамические данные при необходимости)
+    function renderGiftCard(gift, index) {
+      return `<li><div class="gift-card">
+        <img src="${gift.img}" alt="${gift.name}">
+        <div class="gift-card-title">${gift.name}</div>
+        <div class="gift-card-date">Won: ${gift.date}</div>
+        <button class="gift-card-btn withdraw-btn" data-gift-index="${index}">Withdraw</button>
+      </div></li>`;
+    }
+    function getGiftsFromStorage() {
+      // Эта функция больше не нужна в таком виде, данные приходят с сервера
+      return []; 
+    }
+    function updateGiftsList(gifts) { // Теперь функция принимает подарки как аргумент
+      document.getElementById('my-gifts-list').innerHTML = gifts.length
+        ? gifts.map((gift, index) => renderGiftCard(gift, index)).join('')
+        : '<div style="color:#888;margin-top:30px;">No gifts yet</div>';
+    }
+
+    // Логика для модального окна вывода
+    const withdrawModalOverlay = document.getElementById('withdraw-info-modal-overlay');
+    const withdrawModalImg = document.getElementById('withdraw-info-img');
+    const withdrawModalTitle = document.getElementById('withdraw-info-title');
+    const withdrawModalBtn = document.getElementById('withdraw-info-btn');
+
+    let lastWithdrawGift = null;
+    function showWithdrawModal(gift) {
+      withdrawModalImg.src = gift.img;
+      withdrawModalTitle.textContent = gift.name;
+      withdrawModalOverlay.classList.add('visible');
+      lastWithdrawGift = gift;
+    }
+    
+    document.getElementById('my-gifts-list').addEventListener('click', async (e) => {
+      if (e.target && e.target.classList.contains('gift-card-btn')) {
+        const giftIndex = e.target.dataset.giftIndex;
+        // Получаем свежие данные с сервера, чтобы убедиться, что подарок еще там
+        const response = await fetch(`/api/get_user_status?user_id=${currentUser.id}`);
+        const data = await response.json();
+        if (data.gifts && data.gifts[giftIndex]) {
+          const gift = data.gifts[giftIndex];
+          showWithdrawModal(gift);
+        }
+      }
+    });
+
+    withdrawModalBtn.addEventListener('click', () => {
+      withdrawModalOverlay.classList.remove('visible');
+      if (window.Telegram && Telegram.WebApp && lastWithdrawGift) {
+        Telegram.WebApp.sendData(JSON.stringify({action: "withdraw_gift", gift: lastWithdrawGift}));
+        setTimeout(() => {
+          Telegram.WebApp.close();
+        }, 300);
+      }
+    });
+
+    // === Аватарка пользователя из Telegram ===
+    document.addEventListener('DOMContentLoaded', function() {
+      if (window.Telegram && Telegram.WebApp) {
+        Telegram.WebApp.ready();
+        if (Telegram.WebApp.initDataUnsafe && Telegram.WebApp.initDataUnsafe.user) {
+          const user = Telegram.WebApp.initDataUnsafe.user;
+          console.log('Telegram user:', user);
+          const avatarImg = document.getElementById('user-avatar');
+          if (user.photo_url) {
+            avatarImg.src = user.photo_url;
+            avatarImg.style.display = 'block';
+          } else {
+            // Если нет аватарки, показываем иконку-заглушку
+            avatarImg.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+            avatarImg.style.display = 'block';
+          }
+        } else {
+          console.log('Нет данных пользователя Telegram');
+        }
+      } else {
+        console.log('Telegram WebApp API недоступен');
+      }
+    });
+  </script>
+</body>
+</html>

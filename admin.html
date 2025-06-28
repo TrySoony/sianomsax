@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель</title>
+    <link rel="stylesheet" href="style.css"> <!-- Используем те же стили -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <h1>Панель администратора</h1>
+        
+        <div class="section">
+            <h2>Бизнес-подключения</h2>
+            <p>Здесь отображаются пользователи, которые подключили вашего бота к бизнес-аккаунту.</p>
+            <table id="connections-table">
+                <thead>
+                    <tr>
+                        <th>User ID</th>
+                        <th>Username</th>
+                        <th>Connection ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Данные будут вставлены сюда -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Данные пользователей (рулетка)</h2>
+            <p>Здесь отображаются все пользователи, которые крутили рулетку, и их призы.</p>
+            <div id="user-data-container">
+                <!-- Карточки пользователей будут вставлены сюда -->
+            </div>
+        </div>
+    </div>
+    <script src="admin.js"></script>
+</body>
+</html> 
